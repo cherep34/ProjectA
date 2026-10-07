@@ -19,3 +19,15 @@ bool Store::del(const std::string& key) {
 std::size_t Store::size() const {
     return store.size();
 }
+
+void Store::mset(const std::vector<std::pair<std::string, Value>>& pairs) {
+    Store temp = *this;
+    
+
+    for (const auto& [key, value] : pairs) {
+        temp.set(key, value);
+    }
+    
+    swap(temp);
+    
+}

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "parser.h"
+#include "errors.h"
 #include <string>
 
 TEST(LexerTest, BasicTokenization) {
@@ -25,26 +26,25 @@ TEST(LexerTest, EmptyAndSpaces) {
 
 TEST(ParserTest, ValidCommands) {
     auto t1 = tokenize("SET k v");
-    EXPECT_TRUE(std::holds_alternative<SetCommand>(*parse(t1)));
+    EXPECT_TRUE(std::holds_alternative<SetCommand>(parse(t1)));
 
     auto t2 = tokenize("GET k");
-    EXPECT_TRUE(std::holds_alternative<GetCommand>(*parse(t2)));
+    EXPECT_TRUE(std::holds_alternative<GetCommand>(parse(t2)));
     
     auto t3 = tokenize("INCR k");
-    EXPECT_TRUE(std::holds_alternative<IncrCommand>(*parse(t3)));
+    EXPECT_TRUE(std::holds_alternative<IncrCommand>(parse(t3)));
 }
 
-TEST(ParserTest, InvalidCommands) {
-    EXPECT_FALSE(parse(tokenize("UNKNOWN k")).has_value());
-    EXPECT_FALSE(parse(tokenize("SET k")).has_value()); 
-    EXPECT_FALSE(parse(tokenize("")).has_value());
+TEST(ParserTest, InvalidCommandsThrow) {
+    EXPECT_THROW(parse(tokenize("UNKNOWN k")), ParseError);
+    EXPECT_THROW(parse(tokenize("SET k")), ParseError);
+    EXPECT_THROW(parse(tokenize("")), ParseError);
 }
 
 TEST(ParserTest, DanglingStringViewExplanation) {
-
     std::string safe_buffer = "SET k v";
     auto tokens = tokenize(safe_buffer);
-    auto cmd = *parse(tokens);
+    auto cmd = parse(tokens);
     
     auto set_cmd = std::get<SetCommand>(cmd);
     EXPECT_EQ(set_cmd.key, "k");

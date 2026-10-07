@@ -36,6 +36,8 @@ add_executable(kvs_tests
     tests/test_store.cpp
     tests/test_owning_buffer.cpp
     tests/test_parser.cpp
+    tests/test_mset.cpp
+    tests/test_parser_expected.cpp
 )
 target_link_libraries(kvs_tests PRIVATE kvs_core GTest::gtest_main)
 

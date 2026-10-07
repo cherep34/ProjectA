@@ -23,8 +23,8 @@ TEST(MsetTest, AtomicRollbackOnException) {
     Store store;
     store.set("existing", Value(TrackedString("old")));
     
-    TrackedString::reset();
-    TrackedString::throw_on_Nth_copy = 3; 
+    TrackedString::reset_counters();  
+    TrackedString::throw_on_Nth_copy = 3;
     
     std::vector<std::pair<std::string, Value>> pairs = {
         {"k1", Value(TrackedString("v1"))},
@@ -42,5 +42,5 @@ TEST(MsetTest, AtomicRollbackOnException) {
     ASSERT_TRUE(existing.has_value());
     EXPECT_EQ(std::get<TrackedString>(*existing).to_string(), "old");
     
-    TrackedString::reset();
+    TrackedString::reset_counters(); 
 }

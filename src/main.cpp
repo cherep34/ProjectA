@@ -3,21 +3,24 @@
 #include "store.h"
 #include "parser.h"
 #include "command.h"
-#include "errors.h"  
+#include "errors.h"
+#include "string_value.h"
+#include "int_value.h"
+#include "double_value.h"
 
-Value parse_value(std::string_view sv) {
+std::unique_ptr<IValue> parse_value(std::string_view sv) {
     std::string s(sv);
     try {
         size_t pos;
         std::int64_t i = std::stoll(s, &pos);
-        if (pos == s.size()) return Value(i);
+        if (pos == s.size()) return std::make_unique<IntValue>(i);
     } catch(...) {}
     try {
         size_t pos;
         double d = std::stod(s, &pos);
-        if (pos == s.size()) return Value(d);
+        if (pos == s.size()) return std::make_unique<DoubleValue>(d);
     } catch(...) {}
-    return Value(TrackedString(s));
+    return std::make_unique<StringValue>(s);
 }
 
 void execute(const Command& cmd, Store& store) {
@@ -28,10 +31,7 @@ void execute(const Command& cmd, Store& store) {
         },
         [&](const GetCommand& c) {
             if (auto v = store.get(std::string(c.key)); v) {
-                std::visit(overloaded{
-                    [](const TrackedString& s) { std::cout << "\"" << s.to_string() << "\"\n"; },
-                    [](auto arg) { std::cout << arg << "\n"; }
-                }, *v);
+                std::cout << (*v)->to_string() << "\n";
             } else {
                 std::cout << "(nil)\n";
             }
@@ -44,21 +44,20 @@ void execute(const Command& cmd, Store& store) {
         },
         [&](const TypeCommand& c) {
             if (auto v = store.get(std::string(c.key)); v) {
-                std::visit(overloaded{
-                    [](const TrackedString&) { std::cout << "string\n"; },
-                    [](std::int64_t) { std::cout << "int64\n"; },
-                    [](double) { std::cout << "double\n"; }
-                }, *v);
+                if ((*v)->is_string()) std::cout << "string\n";
+                else if ((*v)->is_int()) std::cout << "int64\n";
+                else if ((*v)->is_double()) std::cout << "double\n";
+                else if ((*v)->is_list()) std::cout << "list\n";
             } else {
                 std::cout << "(nil)\n";
             }
         },
         [&](const IncrCommand& c) {
             if (auto v = store.get(std::string(c.key)); v) {
-                if (auto* int_val = std::get_if<std::int64_t>(&*v)) {
-                    (*int_val)++;
-                    store.set(std::string(c.key), *v);
-                    std::cout << *int_val << "\n";
+                if ((*v)->is_int()) {
+                    auto* int_val = dynamic_cast<IntValue*>(*v);
+                    int_val->set(int_val->get() + 1);
+                    std::cout << int_val->get() << "\n";
                 } else {
                     std::cout << "ERR value is not an integer\n";
                 }
@@ -67,7 +66,7 @@ void execute(const Command& cmd, Store& store) {
             }
         },
         [&](const MsetCommand& c) {
-            std::vector<std::pair<std::string, Value>> pairs;
+            std::vector<std::pair<std::string, std::unique_ptr<IValue>>> pairs;
             for (const auto& [key, value] : c.pairs) {
                 pairs.emplace_back(std::string(key), parse_value(value));
             }
@@ -81,14 +80,14 @@ int main() {
     Store store;
     std::string line;
 
-    std::cout << "KVS ready. Type commands (SET, GET, DEL, EXISTS, TYPE, INCR).\n";
+    std::cout << "KVS ready. Type commands (SET, GET, DEL, EXISTS, TYPE, INCR, MSET).\n";
     
     while (std::getline(std::cin, line)) {
         if (line.empty()) continue;
         
         try {
             auto tokens = tokenize(line);
-            auto cmd = parse(tokens);  
+            auto cmd = parse(tokens);
             execute(cmd, store);
         }
         catch (const ParseError& e) {

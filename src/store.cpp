@@ -1,13 +1,13 @@
 #include "store.h"
 #include <utility>
 
-void Store::set(const std::string& key, Value value) {
+void Store::set(const std::string& key, std::unique_ptr<IValue> value) {
     store.insert_or_assign(key, std::move(value));
 }
 
-std::optional<Value> Store::get(const std::string& key) const {
+std::optional<IValue*> Store::get(const std::string& key) const {
     if (auto it = store.find(key); it != store.end()) {
-        return it->second;
+        return it->second.get();
     }
     return std::nullopt;
 }
@@ -20,14 +20,17 @@ std::size_t Store::size() const {
     return store.size();
 }
 
-void Store::mset(const std::vector<std::pair<std::string, Value>>& pairs) {
-    Store temp = *this;
+void Store::mset(const std::vector<std::pair<std::string, std::unique_ptr<IValue>>>& pairs) {
+    Store temp;
+    temp.store = std::map<std::string, std::unique_ptr<IValue>>();
     
-
+    for (const auto& [key, value] : store) {
+        temp.store[key] = value->clone();
+    }
+    
     for (const auto& [key, value] : pairs) {
-        temp.set(key, value);
+        temp.store[key] = value->clone();
     }
     
     swap(temp);
-    
 }

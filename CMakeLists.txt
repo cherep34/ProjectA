@@ -8,11 +8,11 @@ add_compile_options(-Wall -Wextra -Wshadow)
 
 # --- Библиотека ядра ---
 add_library(kvs_core STATIC
-    src/value.cpp
     src/store.cpp
     src/owning_buffer.cpp
     src/parser.cpp
 )
+
 target_include_directories(kvs_core PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
 # --- Консольный клиент ---
@@ -26,19 +26,19 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/google/googletest.git
     GIT_TAG v1.14.0
 )
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# --- Тесты ---
 enable_testing()
+
 add_executable(kvs_tests
-    tests/test_value.cpp
-    tests/test_store.cpp
     tests/test_owning_buffer.cpp
     tests/test_parser.cpp
-    tests/test_mset.cpp
     tests/test_parser_expected.cpp
+    tests/test_append_only_log.cpp
+    tests/test_file_deleter.cpp
+    tests/test_command_cache.cpp
 )
+
 target_link_libraries(kvs_tests PRIVATE kvs_core GTest::gtest_main)
 
 include(GoogleTest)

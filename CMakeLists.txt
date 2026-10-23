@@ -10,7 +10,6 @@ add_compile_options(-Wall -Wextra -Wshadow)
 add_library(kvs_core STATIC
     src/store.cpp
     src/owning_buffer.cpp
-    src/parser.cpp
 )
 
 target_include_directories(kvs_core PUBLIC ${CMAKE_SOURCE_DIR}/src)
@@ -32,17 +31,18 @@ enable_testing()
 
 add_executable(kvs_tests
     tests/test_owning_buffer.cpp
-    tests/test_parser.cpp
-    tests/test_parser_expected.cpp
     tests/test_append_only_log.cpp
     tests/test_file_deleter.cpp
-    tests/test_command_cache.cpp
     tests/test_serializable.cpp
     tests/test_key_like.cpp
     tests/test_keys.cpp
     tests/test_projection.cpp
     tests/test_record_version.cpp
     tests/test_dangling_range.cpp
+    tests/test_function_traits.cpp
+    tests/test_command_registry.cpp
+    tests/test_convert_comparison.cpp
+    tests/test_handlers.cpp
 )
 
 target_link_libraries(kvs_tests PRIVATE kvs_core GTest::gtest_main)

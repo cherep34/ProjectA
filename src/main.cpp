@@ -1,116 +1,41 @@
 #include <iostream>
 #include <string>
+#include <sstream>
+#include <vector>
 #include "store.h"
-#include "parser.h"
-#include "command.h"
-#include "errors.h"
-#include "string_value.h"
-#include "int_value.h"
-#include "double_value.h"
+#include "command_registry.h"
+#include "handlers.h"
 
-std::unique_ptr<IValue> parse_value(std::string_view sv) {
-    std::string s(sv);
-    try {
-        size_t pos;
-        std::int64_t i = std::stoll(s, &pos);
-        if (pos == s.size()) return std::make_unique<IntValue>(i);
-    } catch(...) {}
-    try {
-        size_t pos;
-        double d = std::stod(s, &pos);
-        if (pos == s.size()) return std::make_unique<DoubleValue>(d);
-    } catch(...) {}
-    return std::make_unique<StringValue>(s);
-}
-
-void execute(const Command& cmd, Store& store) {
-    std::visit(overloaded{
-        [&](const SetCommand& c) {
-            store.set(std::string(c.key), parse_value(c.value));
-            std::cout << "OK\n";
-        },
-        [&](const GetCommand& c) {
-            if (auto v = store.get(std::string(c.key)); v) {
-                std::cout << (*v)->to_string() << "\n";
-            } else {
-                std::cout << "(nil)\n";
-            }
-        },
-        [&](const DelCommand& c) {
-            std::cout << (store.del(std::string(c.key)) ? "1" : "0") << "\n";
-        },
-        [&](const ExistsCommand& c) {
-            std::cout << (store.get(std::string(c.key)).has_value() ? "1" : "0") << "\n";
-        },
-        [&](const TypeCommand& c) {
-            if (auto v = store.get(std::string(c.key)); v) {
-                if ((*v)->is_string()) std::cout << "string\n";
-                else if ((*v)->is_int()) std::cout << "int64\n";
-                else if ((*v)->is_double()) std::cout << "double\n";
-                else if ((*v)->is_list()) std::cout << "list\n";
-            } else {
-                std::cout << "(nil)\n";
-            }
-        },
-        [&](const IncrCommand& c) {
-            if (auto v = store.get(std::string(c.key)); v) {
-                if ((*v)->is_int()) {
-                    auto* int_val = dynamic_cast<IntValue*>(*v);
-                    int_val->set(int_val->get() + 1);
-                    std::cout << int_val->get() << "\n";
-                } else {
-                    std::cout << "ERR value is not an integer\n";
-                }
-            } else {
-                std::cout << "ERR no such key\n";
-            }
-        },
-        [&](const KeysCommand& c) {
-            auto keys = store.keys(std::string(c.pattern));
-            if (keys.empty()) {
-                std::cout << "(empty list)\n";
-            } else {
-                for (const auto& key : keys) {
-                    std::cout << key << "\n";
-                }
-            }
-        },
-        [&](const MsetCommand& c) {
-            std::vector<std::pair<std::string, std::unique_ptr<IValue>>> pairs;
-            for (const auto& [key, value] : c.pairs) {
-                pairs.emplace_back(std::string(key), parse_value(value));
-            }
-            store.mset(pairs);
-            std::cout << "OK\n";
-        }
-    }, cmd);
+std::vector<std::string> tokenize_simple(const std::string& line) {
+    std::vector<std::string> tokens;
+    std::istringstream iss(line);
+    std::string token;
+    while (iss >> token) {
+        tokens.push_back(token);
+    }
+    return tokens;
 }
 
 int main() {
     Store store;
-    std::string line;
-
-    std::cout << "KVS ready. Type commands (SET, GET, DEL, EXISTS, TYPE, INCR, MSET).\n";
+    CommandRegistry registry;
     
+    register_all_commands(registry, store);
+    
+    std::cout << "KVS ready. Type commands (SET, GET, DEL, EXISTS, TYPE, INCR, MSET, KEYS, APPEND, STRLEN, GETSET).\n";
+    
+    std::string line;
     while (std::getline(std::cin, line)) {
         if (line.empty()) continue;
         
         try {
-            auto tokens = tokenize(line);
-            auto cmd = parse(tokens);
-            execute(cmd, store);
-        }
-        catch (const ParseError& e) {
-            std::cout << "ERR " << e.what() << "\n";
-        }
-        catch (const TypeMismatchError& e) {
-            std::cout << "ERR " << e.what() << "\n";
-        }
-        catch (const KeyNotFoundError& e) {
-            std::cout << "ERR " << e.what() << "\n";
-        }
-        catch (const KvError& e) {
-            std::cout << "ERR " << e.what() << "\n";
+            auto tokens = tokenize_simple(line);
+            if (tokens.empty()) continue;
+            
+            std::string cmd = tokens[0];
+            std::vector<std::string> args(tokens.begin() + 1, tokens.end());
+            
+            registry.execute(cmd, args);
         }
         catch (const std::exception& e) {
             std::cout << "ERR " << e.what() << "\n";

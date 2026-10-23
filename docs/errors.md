@@ -78,7 +78,7 @@ if (result.has_value()) {
 
 Явно: сигнатура говорит, что ошибка возможна.
 Многословно: нужно проверять has_value() и вызывать value().
-'''
+'
 
 ### 2. Стоимость при отсутствии ошибок
 
@@ -104,3 +104,24 @@ if (!result2) return std::unexpected(result2.error());
 Граница обработки чётко определена (только в main.cpp)
 Ошибки парсинга — исключительные ситуации, а не нормальный поток
 Код чище и читаемее
+
+# Заметки по Этапу 5: Концепции и Ranges
+
+## 5.1 Концепция Serializable
+
+### Определение концепции
+
+```cpp
+template<typename T>
+concept Serializable = requires(T t, const std::vector<std::byte> data) {
+    { t.to_bytes() } -> std::convertible_to<std::vector<std::byte>>;
+    { T::from_bytes(data) } -> std::same_as<T>;
+};
+
+## 5.4 Проекция вместо лямбды
+
+### Сравнение двух подходов
+
+**Версия с проекцией:**
+```cpp
+std::ranges::sort(keys_vec, {}, &std::string::size);

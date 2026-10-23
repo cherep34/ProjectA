@@ -37,6 +37,12 @@ add_executable(kvs_tests
     tests/test_append_only_log.cpp
     tests/test_file_deleter.cpp
     tests/test_command_cache.cpp
+    tests/test_serializable.cpp
+    tests/test_key_like.cpp
+    tests/test_keys.cpp
+    tests/test_projection.cpp
+    tests/test_record_version.cpp
+    tests/test_dangling_range.cpp
 )
 
 target_link_libraries(kvs_tests PRIVATE kvs_core GTest::gtest_main)

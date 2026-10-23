@@ -37,6 +37,7 @@ Command parse(const std::vector<std::string_view>& tokens) {
     if (cmd == "EXISTS" && tokens.size() == 2) return ExistsCommand{tokens[1]};
     if (cmd == "TYPE" && tokens.size() == 2) return TypeCommand{tokens[1]};
     if (cmd == "INCR" && tokens.size() == 2) return IncrCommand{tokens[1]};
+    if (cmd == "KEYS" && tokens.size() == 2) return KeysCommand{tokens[1]};
     
     if (cmd == "MSET") {
         if (tokens.size() < 3 || tokens.size() % 2 == 0) {
@@ -64,6 +65,7 @@ std::expected<Command, ParseError> parse_expected(const std::vector<std::string_
     if (cmd == "EXISTS" && tokens.size() == 2) return ExistsCommand{tokens[1]};
     if (cmd == "TYPE" && tokens.size() == 2) return TypeCommand{tokens[1]};
     if (cmd == "INCR" && tokens.size() == 2) return IncrCommand{tokens[1]};
+    if (cmd == "KEYS" && tokens.size() == 2) return KeysCommand{tokens[1]};
     
     if (cmd == "MSET") {
         if (tokens.size() < 3 || tokens.size() % 2 == 0) {

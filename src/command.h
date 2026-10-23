@@ -16,7 +16,11 @@ struct MsetCommand {
     std::vector<std::pair<std::string_view, std::string_view>> pairs; 
 };
 
-using Command = std::variant<SetCommand, GetCommand, DelCommand, ExistsCommand, TypeCommand, IncrCommand, MsetCommand>;
+struct KeysCommand { 
+    std::string_view pattern; 
+};
+
+using Command = std::variant<SetCommand, GetCommand, DelCommand, ExistsCommand, TypeCommand, IncrCommand, MsetCommand, KeysCommand>;
 
 template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
 template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;

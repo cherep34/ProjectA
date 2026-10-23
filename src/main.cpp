@@ -65,6 +65,16 @@ void execute(const Command& cmd, Store& store) {
                 std::cout << "ERR no such key\n";
             }
         },
+        [&](const KeysCommand& c) {
+            auto keys = store.keys(std::string(c.pattern));
+            if (keys.empty()) {
+                std::cout << "(empty list)\n";
+            } else {
+                for (const auto& key : keys) {
+                    std::cout << key << "\n";
+                }
+            }
+        },
         [&](const MsetCommand& c) {
             std::vector<std::pair<std::string, std::unique_ptr<IValue>>> pairs;
             for (const auto& [key, value] : c.pairs) {

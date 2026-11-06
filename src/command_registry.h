@@ -51,19 +51,19 @@ class CommandRegistry {
     std::map<std::string, Handler> handlers_;
     
 public:
-    template<CommandHandler F>
-    void register_command(const std::string& name, F handler) {
-        constexpr size_t arity = function_arity_v<F>;
-        
-        handlers_[name] = [handler, arity](const std::vector<std::string>& args) {
-            if (args.size() != arity) {
-                throw std::runtime_error(
-                    "Command expects " + std::to_string(arity) + 
-                    " argument(s), got " + std::to_string(args.size()));
-            }
-            call_with_args(handler, args, std::make_index_sequence<arity>{});
-        };
-    }
+        template<CommandHandler F>
+        void register_command(const std::string& name, F handler) {
+            constexpr size_t arity = function_arity_v<F>;
+            
+            handlers_.insert_or_assign(name, [handler, arity](const std::vector<std::string>& args) {
+                if (args.size() != arity) {
+                    throw std::runtime_error(
+                        "Command expects " + std::to_string(arity) + 
+                        " argument(s), got " + std::to_string(args.size()));
+                }
+                call_with_args(handler, args, std::make_index_sequence<arity>{});
+            }); 
+        }
     
     void execute(const std::string& name, const std::vector<std::string>& args) {
         auto it = handlers_.find(name);

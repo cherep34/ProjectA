@@ -9,6 +9,7 @@
 #include <ranges>
 #include <algorithm>
 #include "ivalue.h"
+#include "store_iterator.h"
 #include "key_like.h"
 
 class Store {
@@ -31,6 +32,15 @@ private:
     }
     
 public:
+
+    StoreIterator begin() const {
+        return StoreIterator(store.cbegin());
+    }
+    
+    StoreIterator end() const {
+        return StoreIterator(store.cend());
+    }
+
     template<KeyLike K>
     void set(const K& key, std::unique_ptr<IValue> value) {
         store.insert_or_assign(std::string(to_string_view(key)), std::move(value));

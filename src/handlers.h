@@ -5,6 +5,7 @@
 #include "int_value.h"
 #include "double_value.h"
 #include "command_registry.h"
+#include "list_value.h"
 #include <iostream>
 #include <memory>
 
@@ -149,5 +150,107 @@ inline void register_all_commands(CommandRegistry& registry, Store& store) {
             std::cout << "(nil)\n";
         }
         store.set(std::string(key), parse_value(value));
+    });
+
+        // LPUSH key value - вставка в начало списка
+    registry.register_command("LPUSH", [&](std::string_view key, std::string_view value) {
+        auto existing = store.get(std::string(key));
+        ListValue* list = nullptr;
+        
+        if (existing.has_value()) {
+            if (!(*existing)->is_list()) {
+                std::cout << "ERR key exists but is not a list\n";
+                return;
+            }
+            list = dynamic_cast<ListValue*>(*existing);
+        } else {
+            auto new_list = std::make_unique<ListValue>();
+            list = new_list.get();
+            store.set(std::string(key), std::move(new_list));
+        }
+        
+        list->push_front(std::string(value));
+        std::cout << list->length() << "\n";
+    });
+    
+    // RPUSH key value - вставка в конец списка
+    registry.register_command("RPUSH", [&](std::string_view key, std::string_view value) {
+        auto existing = store.get(std::string(key));
+        ListValue* list = nullptr;
+        
+        if (existing.has_value()) {
+            if (!(*existing)->is_list()) {
+                std::cout << "ERR key exists but is not a list\n";
+                return;
+            }
+            list = dynamic_cast<ListValue*>(*existing);
+        } else {
+            auto new_list = std::make_unique<ListValue>();
+            list = new_list.get();
+            store.set(std::string(key), std::move(new_list));
+        }
+        
+        list->push_back(std::string(value));
+        std::cout << list->length() << "\n";
+    });
+    
+    // LPOP key - извлечение из начала
+    registry.register_command("LPOP", [&](std::string_view key) {
+        auto existing = store.get(std::string(key));
+        if (!existing.has_value()) {
+            std::cout << "(nil)\n";
+            return;
+        }
+        if (!(*existing)->is_list()) {
+            std::cout << "ERR key exists but is not a list\n";
+            return;
+        }
+        auto* list = dynamic_cast<ListValue*>(*existing);
+        if (list->length() == 0) {
+            std::cout << "(nil)\n";
+            return;
+        }
+        std::cout << "\"" << list->pop_front() << "\"\n";
+    });
+    
+    // RPOP key - извлечение из конца
+    registry.register_command("RPOP", [&](std::string_view key) {
+        auto existing = store.get(std::string(key));
+        if (!existing.has_value()) {
+            std::cout << "(nil)\n";
+            return;
+        }
+        if (!(*existing)->is_list()) {
+            std::cout << "ERR key exists but is not a list\n";
+            return;
+        }
+        auto* list = dynamic_cast<ListValue*>(*existing);
+        if (list->length() == 0) {
+            std::cout << "(nil)\n";
+            return;
+        }
+        std::cout << "\"" << list->pop_back() << "\"\n";
+    });
+    
+    // LRANGE key start stop - получение диапазона
+    registry.register_command("LRANGE", [&](std::string_view key, int start, int stop) {
+        auto existing = store.get(std::string(key));
+        if (!existing.has_value()) {
+            std::cout << "(empty list)\n";
+            return;
+        }
+        if (!(*existing)->is_list()) {
+            std::cout << "ERR key exists but is not a list\n";
+            return;
+        }
+        auto* list = dynamic_cast<ListValue*>(*existing);
+        auto range = list->range(start, stop);
+        if (range.empty()) {
+            std::cout << "(empty list)\n";
+        } else {
+            for (const auto& val : range) {
+                std::cout << "\"" << val << "\"\n";
+            }
+        }
     });
 }

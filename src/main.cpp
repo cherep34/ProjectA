@@ -22,7 +22,10 @@ int main() {
     
     register_all_commands(registry, store);
     
-    std::cout << "KVS ready. Type commands (SET, GET, DEL, EXISTS, TYPE, INCR, MSET, KEYS, APPEND, STRLEN, GETSET).\n";
+    std::cout << "KVS ready. Type commands:\n"
+          << "  Basic: SET, GET, DEL, EXISTS, TYPE, INCR, MSET, KEYS\n"
+          << "  String: APPEND, STRLEN, GETSET\n"
+          << "  List: LPUSH, RPUSH, LPOP, RPOP, LRANGE\n";
     
     std::string line;
     while (std::getline(std::cin, line)) {

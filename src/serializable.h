@@ -10,21 +10,14 @@
 #include <cstdint>
 #include <iterator>
 
-// ============================================================
-// КОНЦЕПЦИЯ Serializable
-// Требует от типа T:
-//   1. Метод to_bytes(), возвращающий что-то конвертируемое в vector<byte>
-//   2. Статический метод from_bytes(), принимающий vector<byte> и возвращающий T
-// ============================================================
+
 template<typename T>
 concept Serializable = requires(T t, const std::vector<std::byte> data) {
     { t.to_bytes() } -> std::convertible_to<std::vector<std::byte>>;
     { T::from_bytes(data) } -> std::same_as<T>;
 };
 
-// ============================================================
-// Тип Record для демонстрации
-// ============================================================
+
 struct Record {
     std::string key;
     std::string value;

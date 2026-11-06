@@ -43,7 +43,18 @@ add_executable(kvs_tests
     tests/test_command_registry.cpp
     tests/test_convert_comparison.cpp
     tests/test_handlers.cpp
+    tests/test_list_value.cpp
+    tests/test_store_iterator.cpp
 )
+
+add_executable(list_benchmark benchmarks/list_benchmark.cpp)
+target_compile_options(list_benchmark PRIVATE -O3)
+
+add_executable(map_benchmark benchmarks/map_benchmark.cpp)
+target_compile_options(map_benchmark PRIVATE -O3)
+
+add_executable(emplace_benchmark benchmarks/emplace_benchmark.cpp)
+target_compile_options(emplace_benchmark PRIVATE -O3)
 
 target_link_libraries(kvs_tests PRIVATE kvs_core GTest::gtest_main)
 

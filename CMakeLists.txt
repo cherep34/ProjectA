@@ -45,6 +45,8 @@ add_executable(kvs_tests
     tests/test_handlers.cpp
     tests/test_list_value.cpp
     tests/test_store_iterator.cpp
+    tests/test_keys_range.cpp
+    tests/test_algorithms.cpp
 )
 
 add_executable(list_benchmark benchmarks/list_benchmark.cpp)
@@ -55,6 +57,14 @@ target_compile_options(map_benchmark PRIVATE -O3)
 
 add_executable(emplace_benchmark benchmarks/emplace_benchmark.cpp)
 target_compile_options(emplace_benchmark PRIVATE -O3)
+
+add_executable(hash_benchmark benchmarks/hash_benchmark.cpp)
+target_compile_options(hash_benchmark PRIVATE -O3)
+target_include_directories(hash_benchmark PRIVATE ${CMAKE_SOURCE_DIR}/src)
+
+add_executable(engine_benchmark benchmarks/engine_benchmark.cpp)
+target_compile_options(engine_benchmark PRIVATE -O3)
+target_include_directories(engine_benchmark PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 target_link_libraries(kvs_tests PRIVATE kvs_core GTest::gtest_main)
 

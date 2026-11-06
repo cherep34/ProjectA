@@ -2,7 +2,11 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <memory>
 #include "store.h"
+#include "std_engine.h"
+#include "hash_engine.h"
+#include "bad_hash_engine.h"
 #include "command_registry.h"
 #include "handlers.h"
 
@@ -16,16 +20,28 @@ std::vector<std::string> tokenize_simple(const std::string& line) {
     return tokens;
 }
 
-int main() {
-    Store store;
-    CommandRegistry registry;
+int main(int argc, char* argv[]) {
+    // Выбор движка через параметр запуска
+    std::unique_ptr<IStorageEngine> engine;
+    if (argc > 1 && std::string(argv[1]) == "--engine=hash") {
+        std::cout << "Using HashEngine (FNV-1a, chaining)\n";
+        engine = std::make_unique<HashEngine>();
+    } else if (argc > 1 && std::string(argv[1]) == "--engine=bad") {
+        std::cout << "Using BadHashEngine (sum of chars, chaining)\n";
+        engine = std::make_unique<BadHashEngine>();
+    } else {
+        std::cout << "Using StdEngine (std::map)\n";
+        engine = std::make_unique<StdEngine>();
+    }
     
+    Store store(std::move(engine));
+    CommandRegistry registry;
     register_all_commands(registry, store);
     
     std::cout << "KVS ready. Type commands:\n"
-          << "  Basic: SET, GET, DEL, EXISTS, TYPE, INCR, MSET, KEYS\n"
-          << "  String: APPEND, STRLEN, GETSET\n"
-          << "  List: LPUSH, RPUSH, LPOP, RPOP, LRANGE\n";
+              << "  Basic: SET, GET, DEL, EXISTS, TYPE, INCR, MSET, KEYS\n"
+              << "  String: APPEND, STRLEN, GETSET\n"
+              << "  List: LPUSH, RPUSH, LPOP, RPOP, LRANGE\n";
     
     std::string line;
     while (std::getline(std::cin, line)) {

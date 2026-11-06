@@ -14,7 +14,6 @@ private:
     IteratorType it_;
     
 public:
-    // Типы для итератора
     using iterator_category = std::forward_iterator_tag;
     using value_type = std::string;
     using difference_type = std::ptrdiff_t;
@@ -24,34 +23,15 @@ public:
     StoreIterator() = default;
     explicit StoreIterator(IteratorType it) : it_(it) {}
     
-    reference operator*() const {
-        return it_->first;
-    }
+    reference operator*() const { return it_->first; }
+    pointer operator->() const { return &(it_->first); }
     
-    pointer operator->() const {
-        return &(it_->first);
-    }
+    StoreIterator& operator++() { ++it_; return *this; }
+    StoreIterator operator++(int) { StoreIterator tmp = *this; ++it_; return tmp; }
     
-    StoreIterator& operator++() {
-        ++it_;
-        return *this;
-    }
-    
-    StoreIterator operator++(int) {
-        StoreIterator tmp = *this;
-        ++it_;
-        return tmp;
-    }
-    
-    bool operator==(const StoreIterator& other) const {
-        return it_ == other.it_;
-    }
-    
-    bool operator!=(const StoreIterator& other) const {
-        return it_ != other.it_;
-    }
+    bool operator==(const StoreIterator& other) const { return it_ == other.it_; }
+    bool operator!=(const StoreIterator& other) const { return it_ != other.it_; }
 };
 
-// Проверка концепции
 static_assert(std::forward_iterator<StoreIterator>, 
     "StoreIterator must satisfy forward_iterator concept");

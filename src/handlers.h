@@ -253,4 +253,82 @@ inline void register_all_commands(CommandRegistry& registry, Store& store) {
             }
         }
     });
+
+    registry.register_command("KEYSRANGE", [&](std::string_view from, std::string_view to) {
+        auto keys = store.keys_range(std::string(from), std::string(to));
+        if (keys.empty()) {
+            std::cout << "(empty list)\n";
+        } else {
+            for (const auto& key : keys) {
+                std::cout << "\"" << key << "\"\n";
+            }
+        }
+    });
+
+        // COUNTKEYS pattern - подсчёт ключей через std::count_if
+    registry.register_command("COUNTKEYS", [&](std::string_view pattern) {
+        std::string pat(pattern);
+        // Используем std::count_if вместо ручного цикла
+        int count = std::count_if(store.begin(), store.end(), [&pat](const std::string& key) {
+            return key.find(pat) != std::string::npos;
+        });
+        std::cout << count << "\n";
+    });
+
+    // FINDKEY pattern - поиск первого ключа через std::find_if
+    registry.register_command("FINDKEY", [&](std::string_view pattern) {
+        std::string pat(pattern);
+        // Используем std::find_if вместо ручного цикла
+        auto it = std::find_if(store.begin(), store.end(), [&pat](const std::string& key) {
+            return key.find(pat) != std::string::npos;
+        });
+        if (it != store.end()) {
+            std::cout << "\"" << *it << "\"\n";
+        } else {
+            std::cout << "(nil)\n";
+        }
+    });
+
+    // DEL_KEYS pattern - удаление по условию
+    registry.register_command("DEL_KEYS", [&](std::string_view pattern) {
+        std::string pat(pattern);
+        auto keys = store.keys("*", 0);
+        
+        // Собираем ключи для удаления (те, что содержат паттерн)
+        std::vector<std::string> to_delete;
+        std::copy_if(keys.begin(), keys.end(), std::back_inserter(to_delete),
+            [&pat](const std::string& key) {
+                return key.find(pat) != std::string::npos;
+            });
+        
+        for (const auto& key : to_delete) {
+            store.del(key);
+        }
+        std::cout << to_delete.size() << "\n";
+    });
+
+    // SCAN cursor [MATCH pattern] - итерация с курсором
+    registry.register_command("SCAN", [&](int cursor, std::string_view pattern) {
+        auto all_keys = store.keys(pattern, 0);
+        
+        if (cursor >= static_cast<int>(all_keys.size())) {
+            std::cout << "0\n";
+            return;
+        }
+
+        int new_cursor = cursor;
+        int count = 0;
+        
+        for (int i = cursor; i < static_cast<int>(all_keys.size()); ++i) {
+            std::cout << all_keys[i] << "\n";
+            count++;
+            if (count >= 10) {
+                new_cursor = i + 1;
+                break;
+            }
+            new_cursor = i + 1;
+        }
+        
+        std::cout << new_cursor << "\n";
+    });
 }
